@@ -1,0 +1,24 @@
+
+Library Management System
+
+
+Overview
+This is a simple console-based library management system written in Go. Users must register with a username and password; member IDs are assigned automatically. The system uses structs, interfaces, methods, slices, and maps to manage books and members.
+
+Features
+- Add a new book
+- Remove an existing book (only if not borrowed)
+- Borrow a book (if available)
+- Return a borrowed book
+- List all available books
+- List all books borrowed by a member
+
+File Structure
+- main.go: Application entry point
+- controllers/library_controller.go: Handles user input and calls service methods
+- models/book.go: Book struct and status constants
+- models/member.go: Member struct
+- models/library.go: LibraryManager interface
+- services/library_services.go: Business logic and data management
+- docs/docs.txt: System documentation
+- go.mod: Go module definition
