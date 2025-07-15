@@ -14,7 +14,7 @@ type Book struct {
 	ID     int
 	Title  string
 	Author string
-	Status string // "Available" or "Borrowed"
+	Status string 
 }
 
 func (b *Book) SetStatus(s string) error {

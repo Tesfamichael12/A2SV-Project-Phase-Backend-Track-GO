@@ -64,7 +64,6 @@ func (l *Library) ReturnBook(bookID int, memberID int) error {
 	if err != nil {
 		return err
 	}
-	// Remove book from member's BorrowedBooks slice
 	for i, b := range member.BorrowedBooks {
 		if b.ID == bookID {
 			member.BorrowedBooks = append(member.BorrowedBooks[:i], member.BorrowedBooks[i+1:]...)

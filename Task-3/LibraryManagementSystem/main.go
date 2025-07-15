@@ -16,7 +16,6 @@ func main() {
 	var currentMember *models.Member
 	var nextMemberID int = 1
 
-	// registration
 	fmt.Println("Welcome to the Library Management System!")
 	fmt.Print("Please create an account.\nEnter your username: ")
 	var username string
