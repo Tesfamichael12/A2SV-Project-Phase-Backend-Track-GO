@@ -11,15 +11,16 @@ var tasks = []models.Task{
     {ID: 3, Title: "Task 3", Description: "Third task", DueDate: time.Now().AddDate(0, 0, 2), Status: "Completed"},
 }
 
-var nextTask int = 3
+var nextTask int = tasks[len(tasks) - 1].ID
 
-// data layer function/operations
+/* data layer / Business logics and rules */
 
 func GetAllTasks() []models.Task{
 	return tasks
 }
 
-func GetTaskByID(id int) (models.Task, bool){ // 2nd return value is for, found or !found
+func GetTaskByID(id int) (models.Task, bool){ 
+	// 2nd return value is for, found or !found
 	for _, task := range tasks {
 		if task.ID == id {
 			return task, true
@@ -29,8 +30,8 @@ func GetTaskByID(id int) (models.Task, bool){ // 2nd return value is for, found 
 }
 
 func AddTask(newTask models.Task) {
-	newTask.ID = nextTask
 	nextTask++
+	newTask.ID = nextTask
 
 	tasks = append(tasks, newTask)
 }
