@@ -1,0 +1,131 @@
+definitions:
+  main.album:
+    description: Album object
+    properties:
+      artist:
+        description: Artist name
+        example: John Coltrane
+        type: string
+      id:
+        description: Album ID
+        example: "1"
+        type: string
+      price:
+        description: Album price
+        example: 56.99
+        type: number
+      title:
+        description: Album title
+        example: Blue Train
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Album object
+paths:
+  /albums:
+    get:
+      description: Get all albums in the store
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of albums
+          schema:
+            items:
+              $ref: '#/definitions/main.album'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List albums
+      tags:
+      - albums
+    post:
+      consumes:
+      - application/json
+      description: Add a new album to the store
+      parameters:
+      - description: Album to add
+        in: body
+        name: album
+        required: true
+        schema:
+          $ref: '#/definitions/main.album'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created album
+          schema:
+            $ref: '#/definitions/main.album'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add a new album
+      tags:
+      - albums
+  /albums/{id}:
+    get:
+      description: Get details of an album by its ID
+      parameters:
+      - description: Album ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Album details
+          schema:
+            $ref: '#/definitions/main.album'
+        "404":
+          description: Album not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get album by ID
+      tags:
+      - albums
+  /string/{some_id}:
+    get:
+      consumes:
+      - application/json
+      description: get string by ID
+      operationId: get-string-by-int
+      parameters:
+      - description: Some ID
+        in: path
+        name: some_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      summary: Add a new pet to the store
+swagger: "2.0"
