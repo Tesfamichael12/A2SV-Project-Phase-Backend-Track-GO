@@ -86,7 +86,7 @@ func updateTask(ctx *gin.Context) {
 			if updatedTask.Description != "" {
 				tasks[i].Description = updatedTask.Description
 			}
-			if updatedTask.DueDate.IsZero() {
+			if !updatedTask.DueDate.IsZero() {
 				tasks[i].DueDate = updatedTask.DueDate
 			}
 			if updatedTask.Status != "" {
