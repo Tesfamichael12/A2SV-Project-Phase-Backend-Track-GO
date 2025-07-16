@@ -9,5 +9,5 @@ type Task struct {
 	Title       string    `json:"title" validate:"required"`
 	Description string    `json:"description" validate:"required"`
 	DueDate     time.Time `json:"due_date"`
-	Status      string    `json:"status" validate:"oneof:Pending Completed"`
+	Status      string    `json:"status" validate:"oneof:In Progress Completed"`
    }
