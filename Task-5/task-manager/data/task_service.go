@@ -53,27 +53,16 @@ func InitDB() error {
 
 // GetAllTasks retrieves all tasks from the database
 func GetAllTasks() ([]models.Task, error) {
-	var rawTasks []bson.M
+	var tasks []models.Task
 	cursor, err := taskCollection.Find(context.Background(), bson.D{})
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.Background())
 
-	if err = cursor.All(context.Background(), &rawTasks); err != nil {
+	// Decode all documents into the tasks slice.
+	if err = cursor.All(context.Background(), &tasks); err != nil {
 		return nil, err
-	}
-
-	// Print the raw results to the console for debugging
-	fmt.Printf("--- DEBUG START ---\nRaw data from MongoDB: %+v\n--- DEBUG END ---\n", rawTasks)
-
-	var tasks []models.Task
-	// Manually convert the raw data to the typed struct
-	for _, rawTask := range rawTasks {
-		var task models.Task
-		bsonBytes, _ := bson.Marshal(rawTask)
-		bson.Unmarshal(bsonBytes, &task)
-		tasks = append(tasks, task)
 	}
 
 	return tasks, nil

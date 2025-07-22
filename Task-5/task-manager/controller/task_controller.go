@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 	"task_manager/data"
 	"task_manager/models"
 
@@ -16,6 +17,26 @@ import (
 /* HTTP Request Handlers/logic */
 
 var validate = validator.New()
+
+// bindAndValidateTask binds the JSON, cleans up the data, and validates the task.
+func bindAndValidateTask(c *gin.Context) (models.Task, error) {
+	var task models.Task
+
+	// bind the incoming JSON to the task struct
+	if err := c.ShouldBindJSON(&task); err != nil {
+		return models.Task{}, err
+	}
+
+	task.Title = strings.TrimSpace(task.Title)
+	task.Description = strings.TrimSpace(task.Description)
+	task.Status = strings.TrimSpace(task.Status)
+
+	if err := validate.Struct(task); err != nil {
+		return models.Task{}, err
+	}
+
+	return task, nil
+}
 
 // GetAllTasks returns all tasks
 func GetAllTasks(c *gin.Context) {
@@ -45,13 +66,8 @@ func GetTaskByID(c *gin.Context) {
 
 // AddTask adds a new task
 func AddTask(c *gin.Context) {
-	var task models.Task
-	if err := c.ShouldBindJSON(&task); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := validate.Struct(task); err != nil {
+	task, err := bindAndValidateTask(c)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -72,13 +88,8 @@ func UpdateTask(c *gin.Context) {
 		return
 	}
 
-	var task models.Task
-	if err := c.ShouldBindJSON(&task); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := validate.Struct(task); err != nil {
+	task, err := bindAndValidateTask(c)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

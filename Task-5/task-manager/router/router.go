@@ -1,19 +1,22 @@
 package router
 
 import (
-	"task_manager/controller"
+    "task_manager/controller"
 
-	"github.com/gin-gonic/gin"
+    "github.com/gin-gonic/gin"
 )
 
 func Router() *gin.Engine {
     router := gin.Default()
 
-    router.GET("/tasks", controller.GetAllTasks)
-    router.GET("/tasks/:id", controller.GetTaskByID)
-    router.POST("/tasks", controller.AddTask)
-    router.PUT("/tasks/:id", controller.UpdateTask)
-    router.DELETE("/tasks/:id", controller.DeleteTask)
+    taskRoutes := router.Group("/tasks")
+    {
+        taskRoutes.GET("", controller.GetAllTasks)
+        taskRoutes.POST("", controller.AddTask)
+        taskRoutes.GET("/:id", controller.GetTaskByID)
+        taskRoutes.PUT("/:id", controller.UpdateTask)
+        taskRoutes.DELETE("/:id", controller.DeleteTask)
+    }
 
     return router
 }
