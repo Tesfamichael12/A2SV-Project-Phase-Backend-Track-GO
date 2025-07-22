@@ -1,87 +1,129 @@
 package data
 
 import (
-	"task_manager/models"
+	"context"
+	"log"
+	"os"
 	"testing"
 	"time"
 
+	"task_manager/models"
+
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func TestMain(m *testing.M) {
+	if err := godotenv.Load("../.env"); err != nil {
+		log.Fatalf("Error loading .env file for testing: %v", err)
+	}
 
-var originalTasks = []models.Task{
-	{ID: 1, Title: "Task 1", Description: "First task", DueDate: time.Now(), Status: "In Progress"},
-	{ID: 2, Title: "Task 2", Description: "Second task", DueDate: time.Now().AddDate(0, 0, 1), Status: "In Progress"},
-	{ID: 3, Title: "Task 3", Description: "Third task", DueDate: time.Now().AddDate(0, 0, 2), Status: "Completed"},
+	uri := os.Getenv("DATABASE_URL")
+	if uri == "" {
+		log.Fatal("DATABASE_URL not set in .env file")
+	}
+
+	var err error
+	client, err = mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB for testing: %v", err)
+	}
+
+	testDBName := "taskdb_test"
+	taskCollection = client.Database(testDBName).Collection("tasks")
+
+	exitCode := m.Run()
+
+	if err := client.Database(testDBName).Drop(context.Background()); err != nil {
+		log.Printf("Failed to drop test database: %v", err)
+	}
+	client.Disconnect(context.Background())
+
+	os.Exit(exitCode)
 }
 
-func resetTasks() {
-	tasks = make([]models.Task, len(originalTasks))
-	copy(tasks, originalTasks)
-}
-
-func TestGetAllTasks(t *testing.T) {
-	resetTasks()
-
-	result := GetAllTasks()
-
-	assert.Equal(t, len(tasks), len(result))
-}
-
-func TestGetTaskByID(t *testing.T) {
-	resetTasks()
-
-	task, found := GetTaskByID(1)
-
-	assert.True(t, found)
-	assert.Equal(t, 1, task.ID)
+func setupTest(t *testing.T) {
+	err := taskCollection.Drop(context.Background())
+	assert.NoError(t, err)
 }
 
 func TestAddTask(t *testing.T) {
-	resetTasks()
-
+	setupTest(t)
 	newTask := models.Task{
-		Title:       "New Task",
-		Description: "A new task",
-		DueDate:     time.Now().AddDate(0, 0, 3),
-		Status:      "In Progress",
+		Title:       "Test Task",
+		Description: "A task for testing",
+		DueDate:     time.Now(),
+		Status:      "Pending",
 	}
 
-	AddTask(newTask)
+	insertedID, err := AddTask(newTask)
+	assert.NoError(t, err)
+	assert.NotEqual(t, primitive.NilObjectID, insertedID)
 
-	if len(tasks) == 0 {
-		t.Fatalf("tasks slice is empty after AddTask")
-	}
+	fetchedTask, err := GetTaskByID(insertedID)
+	assert.NoError(t, err)
+	assert.Equal(t, newTask.Title, fetchedTask.Title)
+	assert.Equal(t, newTask.Description, fetchedTask.Description)
+}
 
-	added := tasks[len(tasks)-1]
-	assert.Equal(t, newTask.Title, added.Title)
-	assert.Equal(t, newTask.Description, added.Description)
-	assert.Equal(t, newTask.Status, added.Status)
+func TestGetTaskByID(t *testing.T) {
+	setupTest(t)
+	newTask := models.Task{Title: "Find Me"}
+	insertedID, _ := AddTask(newTask)
+
+	task, err := GetTaskByID(insertedID)
+	assert.NoError(t, err)
+	assert.Equal(t, insertedID, task.ID)
+	assert.Equal(t, "Find Me", task.Title)
+
+	nonExistentID := primitive.NewObjectID()
+	_, err = GetTaskByID(nonExistentID)
+	assert.Error(t, err)
+	assert.Equal(t, mongo.ErrNoDocuments, err)
+}
+
+func TestGetAllTasks(t *testing.T) {
+	setupTest(t)
+	AddTask(models.Task{Title: "Task 1"})
+	AddTask(models.Task{Title: "Task 2"})
+
+	tasks, err := GetAllTasks()
+	assert.NoError(t, err)
+	assert.Len(t, tasks, 2)
 }
 
 func TestUpdateTask(t *testing.T) {
-	resetTasks()
+	setupTest(t)
+	newTask := models.Task{Title: "Original Title"}
+	insertedID, _ := AddTask(newTask)
 
-	updated := models.Task{
-		Title:       "Updated Title",
-		Description: "Updated Desc",
-		DueDate:     time.Now().AddDate(0, 0, 4),
-		Status:      "Completed",
+	updatedTask := models.Task{
+		Title:  "Updated Title",
+		Status: "Completed",
 	}
 
-	ok := UpdateTask(1, updated)
-	assert.True(t, ok)
-	task, found := GetTaskByID(1)
-	assert.True(t, found)
-	assert.Equal(t, "Updated Title", task.Title)
+	modifiedCount, err := UpdateTask(insertedID, updatedTask)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), modifiedCount)
+
+	fetchedTask, _ := GetTaskByID(insertedID)
+	assert.Equal(t, "Updated Title", fetchedTask.Title)
+	assert.Equal(t, "Completed", fetchedTask.Status)
 }
 
 func TestDeleteTask(t *testing.T) {
-	resetTasks()
+	setupTest(t)
+	newTask := models.Task{Title: "To Be Deleted"}
+	insertedID, _ := AddTask(newTask)
 
-	ok := DeleteTask(1)
-	assert.True(t, ok)
-	
-	_, found := GetTaskByID(1)
-	assert.False(t, found)
+	deletedCount, err := DeleteTask(insertedID)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), deletedCount)
+
+	_, err = GetTaskByID(insertedID)
+	assert.Error(t, err)
+	assert.Equal(t, mongo.ErrNoDocuments, err)
 }

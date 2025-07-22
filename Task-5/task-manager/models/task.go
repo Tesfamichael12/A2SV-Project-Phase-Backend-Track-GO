@@ -2,12 +2,14 @@ package models
 
 import (
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Task struct {
-	ID          int    `json:"id"`
-	Title       string    `json:"title" validate:"required"`
-	Description string    `json:"description" validate:"required"`
-	DueDate     time.Time `json:"due_date"`
-	Status      string    `json:"status" validate:"oneof=In_Progress Completed Pending"`
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Title       string             `bson:"title" json:"title" validate:"required"`
+	Description string             `bson:"description" json:"description" validate:"required"`
+	DueDate     time.Time          `bson:"due_date" json:"due_date"`
+	Status      string             `bson:"status" json:"status" validate:"oneof=In_Progress Completed Pending"`
 }
